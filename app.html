@@ -1,0 +1,107 @@
+<html><head>
+    <title>HTML5 + JS Canvas Fireball</title>
+</head>
+<body>
+<style type="text/css">
+canvas{
+    border:1px solid #ccc;
+}
+</style>
+
+<canvas id="canvas" width="700" height="350"></canvas>
+
+<script type="text/javascript">
+var cnavas = document.getElementById('canvas');
+var context = canvas.getContext('2d');
+
+var mouse = {};
+
+canvas.addEventListener('mousemove',function(e){
+    mouse.x = e.pageX;
+    mouse.y = e.pageY;
+});
+
+function Fire(count){
+    if (count == undefined) { count = 100; }
+    this.particleCount(count);
+}
+
+function clearCanvas() {
+    context.clearRect(0, 0, canvas.width, canvas.height);
+}
+
+function rgb() {
+    this.r = Math.round(Math.random()*255),
+    this.g = Math.round(Math.random()*255),
+    this.b = Math.round(Math.random()*255)
+}
+Fire.prototype.particles = [];
+Fire.prototype.FPS = 30;
+Fire.prototype.particle = function() {
+    this.location = (mouse.x && mouse.y) ? { x : mouse.x, y : mouse.y } : { x : canvas.width/2, y : canvas.height/2 };
+    this.speed = { x : -5+Math.random()*10, y : -5+Math.random()*10 };
+    this.radius = 20*Math.random();
+    this.life = 10;
+    this.opacity = 1;
+    this.remaining_life = this.life;
+    this.color = new rgb();
+}
+Fire.prototype.particleCount = function(count) {
+    if (count == undefined) { count = 10; }
+    for (var i = 0; i<count; i++) {
+        this.insert(i);
+    }
+}
+Fire.prototype.insert = function(index) {
+    this.particles[index] = new this.particle();
+}
+Fire.prototype.removeOne = function(index) {
+    this.particles.splice(index, 1);
+}
+Fire.prototype.remove = function() {
+    this.particles.splice(0, this.particles.length);
+}
+Fire.prototype.draw = function(count) {
+    var $this = this;
+    //clearCanvas();
+    context.globalCompositeOperation = "source-over";
+    context.fillStyle = "black";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.globalCompositeOperation = "lighter";
+
+    if (this.particles.length>0) {
+        this.particles.forEach(function(item, i) {
+            item.opacity = Math.round(item.remaining_life/item.life*100)/200;
+            context.beginPath();
+            var gradient = context.createRadialGradient(item.location.x, item.location.y, 0, item.location.x, item.location.y, item.radius);
+            gradient.addColorStop(0.6, "rgba(255, 60, 0, "+item.opacity+")");
+            gradient.addColorStop(0.6, "rgba(255, 255, 125, "+item.opacity+")");
+            gradient.addColorStop(1, "rgba(255, 0, 0, "+item.opacity+")");
+            context.fillStyle = gradient;
+            context.arc(item.location.x, item.location.y, item.radius, Math.PI*2, false);
+            context.fill();
+            item.remaining_life--;
+            item.radius--;
+            item.location.x += item.speed.x;
+            item.location.y += item.speed.y;
+            if (item.remaining_life < 0 || item.radius < 0) {
+                $this.insert(i);
+            }
+        });
+    }
+}
+
+
+var fire = new Fire(1000);
+setInterval(function(){
+    fire.draw();
+
+    context.font="11px Tahoma";
+    context.fillStyle = 'white';
+    context.fillText(fire.FPS+' FPS',10,20);
+
+}, 1000/fire.FPS);
+</script>
+  
+</body>
+</html>
